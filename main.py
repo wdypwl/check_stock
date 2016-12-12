@@ -43,7 +43,8 @@ x=text.split()
 print(''.join(x))
 common = input("input common 1,get today_all_Info 2, get all history info, 3 check stock from local, common =  ")
 common = int(common)
-#print( py_util.get_all_stock_today_volume())
+
+
 if common == 1:
     py_util.get_all_stock_today_data()
 elif common == 2:

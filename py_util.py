@@ -332,17 +332,18 @@ def get_last_update_date(stock_number):
     #---获取上次更新的日期----
    # is_exist = " select count(*) from information_schema.tables  where table_name = '%s';" %(name)
     select_str = "select max(date) from %s" %(stock_number)
+
     cursor = conn.cursor()
     try:
         cursor.execute(select_str)
         data = cursor.fetchall()
         length = len(data)
-        if length > 0:
+        if length > 0 and data[0] and data[0][0]:
             return data[0][0]
         else:
             return 0
     except Exception as e:
-        print("error get_last_update_date, exception = ", e)
+        print("error get_last_update_date stock number =", stock_number, " exception = ", e)
     return 0
 
 # def save_last_update_date(date_num):
