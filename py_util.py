@@ -133,6 +133,8 @@ def get_history_data_by_html(stock_number, stockName,year,season):
         date = i[0]
         date = int(date.replace('-', ""))
         last_price = 0
+        if stock_number == "sh601688":
+            print(i)
         try:
             if (index + 1) < length:
                 last_price = float(reg_list[index+1][3])
@@ -172,6 +174,8 @@ def get_stock_history_data(stock_number, option):
 
     text = text.decode('gb2312')
     pos = text.find('"', 1)
+    if stock_number == "sh601688":
+        print(stock_number)
     # print(text)
     if pos == 0:#没有内容
         return
@@ -188,7 +192,7 @@ def get_stock_history_data(stock_number, option):
             lastUpdateDate = get_last_update_date(stock_number)
             if lastUpdateDate > 0:
                 lastYear =  math.floor(lastUpdateDate/10000)
-                last_month = (lastUpdateDate - lastYear * 10000)/100
+                last_month = int((lastUpdateDate - lastYear * 10000)/100)
                 lastSeason = math.ceil(last_month / 3)
                 # if lastSeason >= 4:
                 #     lastYear=lastYear+1
@@ -196,7 +200,8 @@ def get_stock_history_data(stock_number, option):
             else:
                 lastYear = 2006
                 lastSeason = 1
-
+            if stock_number == "sh601688":
+                print("sh601688 year is", lastYear, "last season is ", lastSeason)
             for year in range(lastYear,int(nowYear)+1):
                 for season in range(lastSeason,5):
                     get_history_data_by_html(stock_number, text[0], year, season)
@@ -408,13 +413,13 @@ def get_all_stock_today_volume():
 def check_stock_in_months_for_least_price():
 
     now = datetime.datetime.now()
-    begin_time = now - datetime.timedelta(90)
+    begin_time = now - datetime.timedelta(360)
     end = int(now.strftime("%Y%m%d"))
     begin = int(begin_time.strftime("%Y%m%d"))
 
     def for_each_stock(stock_number, beginDate, endDate):
         text = get_data_by_day(stock_number, beginDate, endDate)
-        #print(text, stock_number, beginDate, endDate)
+
         length = len(text)
         now_price = 0
         if length > 0:
@@ -422,13 +427,16 @@ def check_stock_in_months_for_least_price():
             min_day = text[0][0]
             for i in text:
               #  print(i[0], i[1], i[4])
-                if i[0] == 20160408:
+                if i[0] == 20161219:
                     now_price = i[4]
                 if i[4] > 0.1 and i[4] < min:
                     min = i[4]
                     min_day = i[0]
+            if stock_number == "sh601688":
+                print("now_price= ", now_price, "min =", min)
             if now_price > 0:
-                if now_price <= (min * 1.05):
+                min_rate = 1
+                if now_price <= (min * min_rate):
                     print(stock_number, " ", text[0][1], " now price =", now_price, " min price = ", min, " min day =", min_day)
 
    # for_each_stock("sh601318", begin, end)

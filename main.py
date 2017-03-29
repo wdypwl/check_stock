@@ -9,6 +9,7 @@ import config
 import time
 from py_util import connect_mysql
 import datetime
+import math
 url = "http://hq.sinajs.cn/list=sz880471"
 
 # filePath = "d:\\炒股\\program\\log\\log.txt"
@@ -41,6 +42,15 @@ print(dYear)
 print(int(dYear[0]))
 x=text.split()
 print(''.join(x))
+# for test
+lastUpdateDate = py_util.get_last_update_date("sh601688")
+print("lastUpdateDate is ", lastUpdateDate)
+lastYear =  math.floor(lastUpdateDate/10000)
+print("lastYear is", lastYear)
+last_month = int((lastUpdateDate - lastYear * 10000)/100)
+print("last_month is", last_month)
+lastSeason = math.ceil(last_month / 3)
+print("lastSeason is", lastSeason)
 common = input("input common 1,get today_all_Info 2, get all history info, 3 check stock from local, common =  ")
 common = int(common)
 
