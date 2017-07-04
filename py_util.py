@@ -11,34 +11,67 @@ from Stock import Stock
 import config
 import math
 import datetime
-conn = 0
+conn_price = 0  # 价格表的数据库链接
 
 
 def connect_mysql():
-    global conn
-    conn = connector.connect(user='wdy', passwd='wdy', host='localhost', db='money_data')
+    global conn_price
+    conn_price = connector.connect(user='wdy', passwd='wdy', host='localhost', db='money_data')
     # create_table("中601390")
 
-
-def create_table(name):
-    global conn
-    cursor = conn.cursor()
+def check_price_table_is_exist(name):
+    global conn_price
+    cursor = conn_price.cursor()
     is_exist = " select count(*) from information_schema.tables  where table_name = '%s';" %(name)
-    # print(is_exist)
     cursor.execute(is_exist)
-
     [(exists,)] = cursor.fetchall()
     # print(exists)
     if exists > 0:
         # print(name, 'is Exist')
+        return True
+    return False
+# 创建stock利润，流通股数表
+def create_now_pe_table():
+    name = "all_stock_now_pe"
+    if check_price_table_is_exist(name):
         return
+    global conn_price
+    cursor = conn_price.cursor()
+    # stock_code  代号
+    # lastfive //过去5个交易日平均每分钟成交量
+    # totalcapital 总股本
+    # currcapital 流通股本
+    # mgjzc    //最近报告的每股净资产
+    # stock_state //个股状态（0:无该记录; 1:上市正常交易; 2:未上市; 3:退市）
+    # profit //最近年度净利润
+    # profit_four //最近四个季度净利润
+    # stockname  //股票名称
+    create_table_str = "create TABLE %s (stock_code  varchar(30) primary key, lastfive float, totalcapital  float, currcapital  float, mgjzc float, stock_state int, profit float, profit_four int, stockname varchar(50) );" %(name)
+    # print(create_table_str)
+    cursor.execute(create_table_str)
+    conn_price.commit()
 
+
+# 创建stock表，每一个stock对应一个表
+def create_table(name):
+    global conn_price
+    cursor = conn_price.cursor()
+    # is_exist = " select count(*) from information_schema.tables  where table_name = '%s';" %(name)
+    # # print(is_exist)
+    # cursor.execute(is_exist)
+    # [(exists,)] = cursor.fetchall()
+    # # print(exists)
+    # if exists > 0:
+    #     # print(name, 'is Exist')
+    #     return
+    if check_price_table_is_exist(name):
+        return
     create_table_str = "create TABLE %s (date int primary key, name varchar(100),  lastPrice float, todayBeginPrice float,todayPrice float, todayMaxPrice float, todayMinPrice float, volume int, totalMoney int, rate float, isWarn int );" %(name)
     # print(create_table_str)
     cursor.execute(create_table_str)
-    conn.commit()
+    conn_price.commit()
 
-#将数据保存到数据库
+# 将数据保存到数据库
 def save_data(stock_number, save_info):
     create_table(stock_number)
     save_data_no_check_table(stock_number, save_info)
@@ -47,13 +80,13 @@ def save_data(stock_number, save_info):
 
 def change_all_name(stock_number, save_info):
     try:
-        global conn
-        cursor = conn.cursor()
+        global conn_price
+        cursor = conn_price.cursor()
         #tempInfo = (stock_number,) + save_in`fo[1]
         excut_str="update %s set name='%s';" % (stock_number, save_info[1])
         print(excut_str)
         cursor.execute(excut_str)
-        conn.commit()
+        conn_price.commit()
     except Exception as e:
         print('error  change_all_name = ', stock_number, "error = ", e)
 
@@ -63,8 +96,8 @@ def save_data_no_check_table(stock_number, save_info):
     # temp = "sg %s %s %d" % tempTuple
     # print(temp)
     try:
-        global conn
-        cursor = conn.cursor()
+        global conn_price
+        cursor = conn_price.cursor()
         #先判断是否有该日期记录
         is_exist = " select count(*) from %s  where date = '%s';" %(stock_number,save_info[0])
         cursor.execute(is_exist)
@@ -79,7 +112,7 @@ def save_data_no_check_table(stock_number, save_info):
             upOrIn_str = "insert into %s(date,name,lastPrice,todayBeginPrice,todayPrice,todayMaxPrice,todayMinPrice,volume,totalMoney,rate,isWarn) values(%d, '%s', %.3f, %.3f, %.3f, %.3f, %.3f, %d, %d, %.3f, %d);" % tempInfo
         #print(upOrIn_str)
         cursor.execute(upOrIn_str)
-        conn.commit()
+        conn_price.commit()
     except Exception as e:
         print('error  stock_number = ', stock_number, "error = ", e)
 #获取最近的一个工作日日期
@@ -108,7 +141,7 @@ def get_close_work_day(date):
 # 从新浪获取历史数据
 def get_history_data_by_html(stock_number, stockName,year,season):
     url = "http://money.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/%s.phtml?year=%d&jidu=%d" %(stock_number[2:],year,season)
-    #print(url)
+    print(url)
     while(True):
         try:
             text = request.urlopen(url).read()
@@ -161,7 +194,6 @@ def get_history_data_by_html(stock_number, stockName,year,season):
         except Exception as e:
             print("error get_history_data_by_html number = ",stock_number, "date = ", date, " error =", e )
 def get_stock_history_data(stock_number, option):
-
     url = "http://hq.sinajs.cn/list=%s" %(stock_number)
     #print("get_stock_history_data url = ", url)
     while(True):
@@ -169,7 +201,7 @@ def get_stock_history_data(stock_number, option):
             text = request.urlopen(url).read()
             break
         except Exception as e:
-            print("error get_stock_history_data number = ",stock_number, "request.urlopen exception error =", e)
+            print("error get_stock_history_data number = ", stock_number, "request.urlopen exception error =", e)
             time.sleep(120)
 
     text = text.decode('gb2312')
@@ -228,8 +260,7 @@ def get_stock_text_by_url(stock_number):
             break
         except Exception as e:
             print("get_stock_text_by_url stockNumber =", stock_number, " get url have exception = ", e)
-            time.sleep(60)
-
+            time.sleep(20)
     text = text.decode('gb2312')
     pos = text.find('"', 1)
     # print(text)
@@ -290,7 +321,7 @@ def get_all_stock_total_volumn(beginDate, endDate):
 def get_data_by_day(stock_number, beginDate, EndDate):
     select_str = "select * from %s where date >= %d and date <= %d" % (stock_number, beginDate, EndDate)
    # print(select_str)
-    cursor = conn.cursor()
+    cursor = conn_price.cursor()
     try:
         cursor.execute(select_str)
         allData = cursor.fetchall()
@@ -306,7 +337,7 @@ def get_all_valume_by_one_date(stock_number, date):
 
     select_str = "select * from %s where date = %d" % (stock_number, date)
     # print(select_str)
-    cursor = conn.cursor()
+    cursor = conn_price.cursor()
     try:
         cursor.execute(select_str)
         allData = cursor.fetchall()
@@ -321,7 +352,7 @@ def get_all_valume_by_one_date(stock_number, date):
 #查询某个stock的某个日期的收盘价
 def get_one_date_closing_price(stock_number, date):
     select_str = "select todayPrice from %s where date=%d" %(stock_number, date)
-    cursor = conn.cursor()
+    cursor = conn_price.cursor()
     try:
         cursor.execute(select_str)
         data = cursor.fetchall()
@@ -338,7 +369,7 @@ def get_last_update_date(stock_number):
    # is_exist = " select count(*) from information_schema.tables  where table_name = '%s';" %(name)
     select_str = "select max(date) from %s" %(stock_number)
 
-    cursor = conn.cursor()
+    cursor = conn_price.cursor()
     try:
         cursor.execute(select_str)
         data = cursor.fetchall()
@@ -351,16 +382,7 @@ def get_last_update_date(stock_number):
         print("error get_last_update_date stock number =", stock_number, " exception = ", e)
     return 0
 
-# def save_last_update_date(date_num):
-#     update_str = "update  global_data set last_update_date=%d" % date_num
-#     cursor = conn.cursor()
-#     try:
-#         print("save_last_update_date sql= " + update_str)
-#         cursor.execute(update_str)
-#         conn.commit()
-#     except Exception as e:
-#         print("error save_last_update_date, exception = ", e)
-#     return
+
 def check_all_stock():
     begin_date = 20150616
     end_date = 201506117
@@ -411,64 +433,44 @@ def get_all_stock_today_volume():
 #check all stock， get least stock between six month
 #检查那个stock到底半年的最低点
 def check_stock_in_months_for_least_price():
-
     now = datetime.datetime.now()
     begin_time = now - datetime.timedelta(360)
     end = int(now.strftime("%Y%m%d"))
     begin = int(begin_time.strftime("%Y%m%d"))
 
-    def for_each_stock(stock_number, beginDate, endDate):
-        text = get_data_by_day(stock_number, beginDate, endDate)
-
-        length = len(text)
-        now_price = 0
-        if length > 0:
-            min = text[0][4]
-            min_day = text[0][0]
-            for i in text:
-              #  print(i[0], i[1], i[4])
-                if i[0] == 20161219:
-                    now_price = i[4]
-                if i[4] > 0.1 and i[4] < min:
-                    min = i[4]
-                    min_day = i[0]
-            if stock_number == "sh601688":
-                print("now_price= ", now_price, "min =", min)
-            if now_price > 0:
-                min_rate = 1
-                if now_price <= (min * min_rate):
-                    print(stock_number, " ", text[0][1], " now price =", now_price, " min price = ", min, " min day =", min_day)
 
    # for_each_stock("sh601318", begin, end)
     for i in range(1, 1000):
         temp = "sz%06.0f" %(i)
-        for_each_stock(temp, begin, end)
+        check_one_stock_least_price(temp, begin, end)
     for i in range(600000, 604000):
         temp = "sh%d" %(i)
-        for_each_stock(temp, begin, end)
+        check_one_stock_least_price(temp, begin, end)
 
 
+def check_one_stock_least_price(stock_number, beginDate, endDate):
+    text = get_data_by_day(stock_number, beginDate, endDate)
+    length = len(text)
+    now_price = 0
+    if length > 0:
+        min = text[0][4]
+        min_day = text[0][0]
+        for i in text:
+            # print(i[0], i[1], i[4])
+            if i[0] == 20161219:
+                now_price = i[4]
+            if i[4] > 0.1 and i[4] < min:
+                min = i[4]
+                min_day = i[0]
+        if stock_number == "sh601688":
+            print("now_price= ", now_price, "min =", min)
+        if now_price > 0:
+            min_rate = 1
+            if now_price <= (min * min_rate):
+                print(stock_number, " ", text[0][1], " now price =", now_price, " min price = ", min, " min day =",
+                      min_day)
 
-# def get_some_stock_data(number, begin_date, end_date):
-#     if number > 600000:
-#         stock_number = "sh%d" % (number)
-#     else:
-#         stock_number = "sz%d" % (number)
-#     parserMoney.get_stock_info_by_some_condition(stock_number, begin_date, end_date, True)
-#     return
-#     begin_date = date - days - 1
-#
-#     select_str = "select * from %s where date >= %d and date <= %d" % (stock_number, begin_date, end_date)
-#     cursor = conn.cursor()
-#     try:
-#         cursor.execute(select_str)
-#         allData = cursor.fetchall()
-#     except Exception as e:
-#         print("error get_some_stock_data, exception = ", e)
-#         return
-#
-#     for i in allData:
-#         print(i, "\n")
+
 
 # 获取今天所有stock的数据并且保存
 def check_stock_name():
@@ -487,6 +489,64 @@ def check_stock_name():
         temp = "sh%d" %(i)
         for_each_stock(temp)
         """
+
+
+def update_given_stocks_and_check_condition(list):
+    now = datetime.datetime.now()
+    begin_time = now - datetime.timedelta(config.TIME_MID_YEAR)
+    end = int(now.strftime("%Y%m%d"))
+    begin = int(begin_time.strftime("%Y%m%d"))
+    for i in list:
+        get_stock_history_data(i, config.ALL_YEARS)
+        check_one_stock_least_price(i, begin, end)
+
+
+# 检测某个stock是否存在
+def check_stock_exist(stock_name):
+    # 暂时使用该方法
+    text = get_stock_text_by_url(stock_name)
+    if text:
+        return True
+    return False
+
+# 获取stock的pe，profit
+def get_stock_now_pe(stock_code):
+    url = "http://finance.sina.com.cn/realstock/company/%s/nc.shtml" %(stock_code)
+    print(url)
+    while(True):
+        try:
+            text = request.urlopen(url).read()
+            break
+        except Exception as e:
+            print("error get_stock_now_pe number = ",stock_code, "request.urlopen exception error =", e)
+            if e.__str__() == "HTTP Error 404: Not Found":  #如果改stock不存在，直接返回
+                return
+            time.sleep(30)
+
+    text = text.decode('gbk')
+    #print(text)
+    reg = r"\nvar lastfive = (.*);.*\n.*\nvar totalcapital = (.*);.*\nvar currcapital = (.*);.*\n"
+
+    pattern = re.compile(reg)
+    match = pattern.search(text)
+    lastfive = match.group(1)
+    totalcapital = match.group(2)
+    currcapital = match.group(3)
+    #print(match.group(), match.end(match.lastindex),match.endpos)
+    #reg_1 = r"\nvar mgjzc = (.*);"
+    reg_1 = r"\nvar mgjzc = (.*);.*\nvar stock_state = (.*);//.*\n.*\nvar profit = (.*);.*\nvar profit_four = (.*);.*\n.*\nvar stockname = '(.*)';"
+    pattern_1 = re.compile(reg_1)
+    match = pattern_1.search(text, match.end(match.lastindex))
+    mgjzc = match.group(1)  # 最近报告的每股净资产
+    stock_state = match.group(2)  # 个股状态（0:无该记录; 1:上市正常交易; 2:未上市; 3:退市）
+    profit = match.group(3)
+    profit_four = match.group(4)
+    stockname = match.group(5)
+    print(lastfive, totalcapital, currcapital, mgjzc, stock_state, profit, profit_four, stockname)
+
+
+
+
 
 
 

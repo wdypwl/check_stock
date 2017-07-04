@@ -94,7 +94,10 @@ elif common == 9: #不断的获取今天的stock的所有交易量，如果超�
         total = py_util.get_all_stock_today_volume()
         print(nowTime, "  ", total)
         time.sleep(300)
-
+elif common == 10: #更新特定的stock，并检查是否满足特定的条件
+    py_util.update_given_stocks_and_check_condition(config.given_list)
+elif common == 11: # 获取stock 的profit数据
+    py_util.get_stock_now_pe("sz000877")
 else:
     print("error not find the common ", common)
 
