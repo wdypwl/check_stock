@@ -49,7 +49,7 @@ def create_table(name):
     #     return
     if check_price_table_is_exist(name):
         return
-    create_table_str = "create TABLE %s (date int primary key, name varchar(100),  lastPrice float, todayBeginPrice float,todayPrice float, todayMaxPrice float, todayMinPrice float, volume int, totalMoney int, rate float, isWarn int );" %(name)
+    create_table_str = "create TABLE %s (date int primary key, name varchar(60) CHARACTER SET utf8,  lastPrice float, todayBeginPrice float,todayPrice float, todayMaxPrice float, todayMinPrice float, volume int, totalMoney int, rate float, isWarn int );" %(name)
     # print(create_table_str)
     cursor.execute(create_table_str)
     conn_price.commit()
