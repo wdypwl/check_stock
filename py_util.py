@@ -19,6 +19,9 @@ def connect_mysql():
     conn_price = connector.connect(user='wdy', passwd='wdy', host='localhost', db='money_data')
     # create_table("中601390")
 
+def get_conn_price():
+    global conn_price
+    return conn_price
 def check_price_table_is_exist(name):
     global conn_price
     cursor = conn_price.cursor()
@@ -30,26 +33,6 @@ def check_price_table_is_exist(name):
         # print(name, 'is Exist')
         return True
     return False
-# 创建stock利润，流通股数表
-def create_now_pe_table():
-    name = "all_stock_now_pe"
-    if check_price_table_is_exist(name):
-        return
-    global conn_price
-    cursor = conn_price.cursor()
-    # stock_code  代号
-    # lastfive //过去5个交易日平均每分钟成交量
-    # totalcapital 总股本
-    # currcapital 流通股本
-    # mgjzc    //最近报告的每股净资产
-    # stock_state //个股状态（0:无该记录; 1:上市正常交易; 2:未上市; 3:退市）
-    # profit //最近年度净利润
-    # profit_four //最近四个季度净利润
-    # stockname  //股票名称
-    create_table_str = "create TABLE %s (stock_code  varchar(30) primary key, lastfive float, totalcapital  float, currcapital  float, mgjzc float, stock_state int, profit float, profit_four int, stockname varchar(50) );" %(name)
-    # print(create_table_str)
-    cursor.execute(create_table_str)
-    conn_price.commit()
 
 
 # 创建stock表，每一个stock对应一个表
@@ -509,41 +492,14 @@ def check_stock_exist(stock_name):
         return True
     return False
 
-# 获取stock的pe，profit
-def get_stock_now_pe(stock_code):
-    url = "http://finance.sina.com.cn/realstock/company/%s/nc.shtml" %(stock_code)
-    print(url)
-    while(True):
-        try:
-            text = request.urlopen(url).read()
-            break
-        except Exception as e:
-            print("error get_stock_now_pe number = ",stock_code, "request.urlopen exception error =", e)
-            if e.__str__() == "HTTP Error 404: Not Found":  #如果改stock不存在，直接返回
-                return
-            time.sleep(30)
-
-    text = text.decode('gbk')
-    #print(text)
-    reg = r"\nvar lastfive = (.*);.*\n.*\nvar totalcapital = (.*);.*\nvar currcapital = (.*);.*\n"
-
-    pattern = re.compile(reg)
-    match = pattern.search(text)
-    lastfive = match.group(1)
-    totalcapital = match.group(2)
-    currcapital = match.group(3)
-    #print(match.group(), match.end(match.lastindex),match.endpos)
-    #reg_1 = r"\nvar mgjzc = (.*);"
-    reg_1 = r"\nvar mgjzc = (.*);.*\nvar stock_state = (.*);//.*\n.*\nvar profit = (.*);.*\nvar profit_four = (.*);.*\n.*\nvar stockname = '(.*)';"
-    pattern_1 = re.compile(reg_1)
-    match = pattern_1.search(text, match.end(match.lastindex))
-    mgjzc = match.group(1)  # 最近报告的每股净资产
-    stock_state = match.group(2)  # 个股状态（0:无该记录; 1:上市正常交易; 2:未上市; 3:退市）
-    profit = match.group(3)
-    profit_four = match.group(4)
-    stockname = match.group(5)
-    print(lastfive, totalcapital, currcapital, mgjzc, stock_state, profit, profit_four, stockname)
-
+def get_next_stock_number():
+    for i in range(1,1000):
+        stock_number = "sz%06.0f" %(i)
+        yield stock_number
+    # 泸市A股
+    for i in range(600000, 604000):
+        stock_number = "sh%d" %(i)
+        yield stock_number
 
 
 

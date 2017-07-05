@@ -10,6 +10,7 @@ import time
 from py_util import connect_mysql
 import datetime
 import math
+import mgr_pe
 url = "http://hq.sinajs.cn/list=sz880471"
 
 # filePath = "d:\\炒股\\program\\log\\log.txt"
@@ -97,7 +98,9 @@ elif common == 9: #不断的获取今天的stock的所有交易量，如果超�
 elif common == 10: #更新特定的stock，并检查是否满足特定的条件
     py_util.update_given_stocks_and_check_condition(config.given_list)
 elif common == 11: # 获取stock 的profit数据
-    py_util.get_stock_now_pe("sz000877")
+    mgr_pe.get_all_stock_pe_data()
+elif common == 12: # 获取stock 的profit数据
+    mgr_pe.get_stock_now_pe('sz000683')
 else:
     print("error not find the common ", common)
 
