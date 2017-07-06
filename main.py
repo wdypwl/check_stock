@@ -11,6 +11,7 @@ from py_util import connect_mysql
 import datetime
 import math
 import mgr_pe
+from datetime import date
 url = "http://hq.sinajs.cn/list=sz880471"
 
 # filePath = "d:\\炒股\\program\\log\\log.txt"
@@ -30,8 +31,8 @@ for i in range(1, 2):
 date_format = datetime.datetime.now().strftime("%Y%m%d")
 print(date_format)
 text = "he heh"
-makeTime = (2016,4,1,16,41,10,0,0,0)
-print(time.mktime((2016,4,1,16,41,10,0,0,0)))
+makeTime = (2016, 4, 1, 16, 41, 10, 0, 0, 0)
+print(time.mktime((2016, 4, 1, 16, 41, 10, 0, 0, 0)))
 print(time.time())
 year = time.strftime('%H-%M', time.localtime(time.time()))
 print(year)
@@ -81,26 +82,12 @@ elif common == 7:
     py_util.get_all_stock_total_volumn(begin_time, now)
 elif common == 8:
     py_util.check_stock_in_months_for_least_price()
-elif common == 9: #不断的获取今天的stock的所有交易量，如果超过3点，就将数据保存
-    getSave=True
-    while(True):
-        nowTime = time.strftime('%H%M', time.localtime(time.time()))
-        nowTime = int(nowTime)
-        if nowTime > 1510 and getSave:
-            py_util.get_all_stock_today_data()
-            getSave=False
-        elif nowTime < 1510 and not getSave:
-            getSave=True
-
-        total = py_util.get_all_stock_today_volume()
-        print(nowTime, "  ", total)
-        time.sleep(300)
 elif common == 10: #更新特定的stock，并检查是否满足特定的条件
     py_util.update_given_stocks_and_check_condition(config.given_list)
 elif common == 11: # 获取stock 的profit数据
     mgr_pe.get_all_stock_pe_data()
 elif common == 12: # 获取stock 的profit数据
-    mgr_pe.get_stock_now_pe('sz000683')
+    mgr_pe.check_all_stock_pe()
 else:
     print("error not find the common ", common)
 

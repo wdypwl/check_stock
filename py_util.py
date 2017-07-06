@@ -11,6 +11,7 @@ from Stock import Stock
 import config
 import math
 import datetime
+import mgr_pe
 conn_price = 0  # 价格表的数据库链接
 
 
@@ -420,51 +421,44 @@ def check_stock_in_months_for_least_price():
     begin_time = now - datetime.timedelta(360)
     end = int(now.strftime("%Y%m%d"))
     begin = int(begin_time.strftime("%Y%m%d"))
-
-
-   # for_each_stock("sh601318", begin, end)
-    for i in range(1, 1000):
-        temp = "sz%06.0f" %(i)
-        check_one_stock_least_price(temp, begin, end)
-    for i in range(600000, 604000):
-        temp = "sh%d" %(i)
-        check_one_stock_least_price(temp, begin, end)
-
+    # for_each_stock("sh601318", begin, end)
+    for stock_code in get_next_stock_number():
+        text = get_stock_text_by_url(stock_code)
+        if text:
+            result = parserMoney.parser_stock_text(text)
+            #change_all_name(stock_number, result)
+            now_price = result[4]
+            save_data(stock_code, result)
+            if mgr_pe.check_condition_pe_pb(stock_code, now_price, 10):
+                check_one_stock_least_price(stock_code, begin, end)
 
 def check_one_stock_least_price(stock_number, beginDate, endDate):
     text = get_data_by_day(stock_number, beginDate, endDate)
     length = len(text)
     now_price = 0
+    date_format = datetime.datetime.now().strftime("%Y%m%d")
+    now_date = int(date_format)
     if length > 0:
         min = text[0][4]
         min_day = text[0][0]
         for i in text:
             # print(i[0], i[1], i[4])
-            if i[0] == 20161219:
+            if i[0] == now_date:
                 now_price = i[4]
             if i[4] > 0.1 and i[4] < min:
                 min = i[4]
                 min_day = i[0]
-        if stock_number == "sh601688":
-            print("now_price= ", now_price, "min =", min)
+        # if stock_number == "sh601688":
+        #     print("now_price= ", now_price, "min =", min)
         if now_price > 0:
-            min_rate = 1
+            min_rate = 1.05
             if now_price <= (min * min_rate):
                 print(stock_number, " ", text[0][1], " now price =", now_price, " min price = ", min, " min day =",
                       min_day)
 
 
 
-# 获取今天所有stock的数据并且保存
-def check_stock_name():
-    def for_each_stock(stock_number):
-        text = get_stock_text_by_url(stock_number)
-        if text:
-            print(text)
-            result = parserMoney.parser_stock_text(text)
-            print(result)
-            save_data(stock_number, result)
-    for_each_stock("sh600318")
+
 """    for i in range(1, 1000):
         temp = "sz%06.0f" %(i)
         for_each_stock(temp)
