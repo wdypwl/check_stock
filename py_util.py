@@ -419,7 +419,7 @@ def get_all_stock_today_volume():
 def check_stock_in_months_for_least_price():
     now = datetime.datetime.now()
     begin_time = now - datetime.timedelta(360)
-    end = int(now.strftime("%Y%m%d"))
+    # end = int(now.strftime("%Y%m%d"))
     begin = int(begin_time.strftime("%Y%m%d"))
     # for_each_stock("sh601318", begin, end)
     for stock_code in get_next_stock_number():
@@ -429,15 +429,16 @@ def check_stock_in_months_for_least_price():
             #change_all_name(stock_number, result)
             now_price = result[4]
             save_data(stock_code, result)
-            if mgr_pe.check_condition_pe_pb(stock_code, now_price, 10):
+            end = result[0]
+            if mgr_pe.check_condition_pe_pb(stock_code, now_price, 20, 10, 3):
                 check_one_stock_least_price(stock_code, begin, end)
 
-def check_one_stock_least_price(stock_number, beginDate, endDate):
-    text = get_data_by_day(stock_number, beginDate, endDate)
+def check_one_stock_least_price(stock_number, begin_date, end_date):
+    text = get_data_by_day(stock_number, begin_date, end_date)
     length = len(text)
     now_price = 0
-    date_format = datetime.datetime.now().strftime("%Y%m%d")
-    now_date = int(date_format)
+    # date_format = datetime.datetime.now().strftime("%Y%m%d")
+    now_date = end_date
     if length > 0:
         min = text[0][4]
         min_day = text[0][0]

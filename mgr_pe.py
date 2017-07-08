@@ -140,6 +140,14 @@ def get_pe_pb(stock_code):
     return None
 
 
+def check_profit_growth_rate(now_profit, last_profit, campare_rate=0):
+    # 如果相等，就可能是第一季报还没有出来，直接返回true
+    if now_profit == last_profit or not campare_rate == 0:
+        return True
+    rate = (now_profit - last_profit)/last_profit *100
+    if rate >= campare_rate:
+        return True
+    return False
 def check_condition_pe_pb(stock_code, price, check_pe, check_pe_min=0, check_pb=None):
     data = get_pe_pb(stock_code)
     if not data:
@@ -150,6 +158,10 @@ def check_condition_pe_pb(stock_code, price, check_pe, check_pe_min=0, check_pb=
         return False
     total_profit = data[PROFIT_FOUR_INDEX] * PROFIT_UINT
     pe = total_share/total_profit
+    # 要判断今天是否比上一年的利润增多10
+    is_grouth = check_profit_growth_rate(data[PROFIT_FOUR_INDEX], data[PROFIT_INDEX], 0)
+    if not is_grouth:
+        return False
     if check_pb:
             if data[MGJZC_INDEX] <= 0:
                 return False
