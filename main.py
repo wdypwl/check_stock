@@ -66,15 +66,9 @@ elif common == 3:
 elif common == 4:
     py_util.dynamic_check_stock_info()
 elif common == 5:
-    # stock_number = input("input stock number =")
-    check_list = ["sh600188", "sh600267","sh600559","sh601688", "sh601318",
-                  "sh601928", "sh600839", "sh601328", "sh600096", "sh600036",
-                  "sz000031", "sz000861", "sh600022", "sh600784"]
-    for i in check_list:
-        parserMoney.check_a_stock_month_data(i)
+    py_util.check_one_stock_least_price("sz000046", 20170208, 20170707)
 elif common == 6:
-    result = py_util.get_data_by_day("sh601318", 20160101, 20160130)
-    print(result)
+     py_util.get_stock_history_data("sz000046", config.LAST_YEAR)
 elif common == 7:
     #nowDay = time.strftime('%Y%m%d', time.localtime(time.time()))
     now = datetime.datetime.now()
