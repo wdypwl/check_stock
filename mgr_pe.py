@@ -33,7 +33,7 @@ def create_now_pe_table():
     # profit //最近年度净利润
     # profit_four //最近四个季度净利润
     # stockname  //股票名称
-    create_table_str = "create TABLE %s (stock_code  varchar(30) CHARACTER SET utf8 primary key, lastfive float, totalcapital  float, currcapital  float, mgjzc float, stock_state int, profit float, profit_four float, stockname varchar(50) CHARACTER SET utf8);" %(name)
+    create_table_str = "create TABLE %s (stock_code  varchar(30) CHARACTER SET utf8 primary key, lastfive float, totalcapital  float, currcapital  float, mgjzc float, stock_state int, profit float, profit_four float, stockname varchar(50) CHARACTER SET utf8, business_scope varchar(100) CHARACTER SET utf8);" %(name)
     # print(create_table_str)
     cursor.execute(create_table_str)
     conn_price.commit()
@@ -41,7 +41,7 @@ def create_now_pe_table():
 # 从网站获取某个stock的数据
 def get_stock_now_pe(stock_code):
     url = "http://finance.sina.com.cn/realstock/company/%s/nc.shtml" %(stock_code)
-    # print(url)
+    print(url)
     text = ''
     while(True):
         try:
@@ -57,7 +57,6 @@ def get_stock_now_pe(stock_code):
     text = text.decode('gbk', 'ignore')
     #print(text)
     reg = r"\nvar lastfive = (.*);.*\n.*\nvar totalcapital = (.*);.*\nvar currcapital = (.*);.*\n"
-
     pattern = re.compile(reg)
     match = pattern.search(text)
     lastfive = float(match.group(1))
@@ -73,9 +72,12 @@ def get_stock_now_pe(stock_code):
     profit = float(match.group(3))
     profit_four = float(match.group(4))
     stockname = match.group(5)
+    reg_2 = r"\n<a.*target='_blank'>(.*)</a> \n</p>"
+    pattern_2 = re.compile(reg_2)
+    match = pattern_2.search(text)
+    business_scope = match.group(1)
     # print(lastfive, totalcapital, currcapital, mgjzc, stock_state, profit, profit_four, stockname)
-    return lastfive, totalcapital, currcapital, mgjzc, stock_state, profit, profit_four, stockname
-
+    return lastfive, totalcapital, currcapital, mgjzc, stock_state, profit, profit_four, stockname, business_scope
 
     # 先判断是否已经保存了
 def save_pe_data(stock_code, save_info):
@@ -94,10 +96,10 @@ def save_pe_data(stock_code, save_info):
         if exists > 0:
             insertInfo = (pe_table_name,) + save_info + (stock_code,)
             # stock_code  varchar(30) primary key, lastfive float, totalcapital  float, currcapital  float, mgjzc float, stock_state int, profit float, profit_four int, stockname varchar(50) )
-            upOrIn_str = "update %s set  lastfive=%.3f,totalcapital=%.3f,currcapital=%.3f,mgjzc=%.3f,stock_state=%d,profit=%.3f,profit_four=%.3f,stockname='%s' where stock_code='%s';" % insertInfo
+            upOrIn_str = "update %s set  lastfive=%.3f,totalcapital=%.3f,currcapital=%.3f,mgjzc=%.3f,stock_state=%d,profit=%.3f,profit_four=%.3f,stockname='%s',business_scope='%s' where stock_code='%s';" % insertInfo
         else:
             tempInfo = (pe_table_name,) + (stock_code,) + save_info
-            upOrIn_str = "insert into %s (stock_code,lastfive,totalcapital,currcapital,mgjzc,stock_state,profit,profit_four,stockname) values('%s', %.3f, %.3f, %.3f, %.3f, %d, %.3f, %.3f, '%s');" % tempInfo
+            upOrIn_str = "insert into %s (stock_code,lastfive,totalcapital,currcapital,mgjzc,stock_state,profit,profit_four,stockname,business_scope) values('%s', %.3f, %.3f, %.3f, %.3f, %d, %.3f, %.3f, '%s', '%s');" % tempInfo
         #print(upOrIn_str)
         cursor.execute(upOrIn_str)
         conn_price.commit()
@@ -148,7 +150,7 @@ def check_profit_growth_rate(now_profit, last_profit, campare_rate=0):
     if rate >= campare_rate:
         return True
     return False
-def check_condition_pe_pb(stock_code, price, check_pe, check_pe_min=0, check_pb=None):
+def check_condition_pe_pb(stock_code, price, check_pe, check_pe_min=0, profit_grouth=None, check_pb=None):
     data = get_pe_pb(stock_code)
     if not data:
         return False
@@ -158,8 +160,9 @@ def check_condition_pe_pb(stock_code, price, check_pe, check_pe_min=0, check_pb=
         return False
     total_profit = data[PROFIT_FOUR_INDEX] * PROFIT_UINT
     pe = total_share/total_profit
+    pro_grouth = profit_grouth or 10
     # 要判断今天是否比上一年的利润增多10
-    is_grouth = check_profit_growth_rate(data[PROFIT_FOUR_INDEX], data[PROFIT_INDEX], 0)
+    is_grouth = check_profit_growth_rate(data[PROFIT_FOUR_INDEX], data[PROFIT_INDEX], pro_grouth)
     if not is_grouth:
         return False
     if check_pb:

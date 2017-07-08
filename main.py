@@ -17,6 +17,10 @@ url = "http://hq.sinajs.cn/list=sz880471"
 # filePath = "d:\\炒股\\program\\log\\log.txt"
 # text = request.urlopen(url).read()
 
+file = open("sample.txt")
+
+for line in file:
+    print(line)
 connect_mysql()
 for i in range(1, 2):
     print(i)
@@ -66,20 +70,15 @@ elif common == 3:
 elif common == 4:
     py_util.dynamic_check_stock_info()
 elif common == 5:
-    # stock_number = input("input stock number =")
-    check_list = ["sh600188", "sh600267","sh600559","sh601688", "sh601318",
-                  "sh601928", "sh600839", "sh601328", "sh600096", "sh600036",
-                  "sz000031", "sz000861", "sh600022", "sh600784"]
-    for i in check_list:
-        parserMoney.check_a_stock_month_data(i)
+    py_util.check_one_stock_least_price("sz000046", 20170208, 20170707)
 elif common == 6:
-    result = py_util.get_data_by_day("sh601318", 20160101, 20160130)
-    print(result)
+    py_util.get_all_stock_history_data(config.LAST_YEAR)
+    # py_util.get_stock_history_data("sz000046", config.LAST_YEAR)
 elif common == 7:
     #nowDay = time.strftime('%Y%m%d', time.localtime(time.time()))
     now = datetime.datetime.now()
     begin_time = now - datetime.timedelta(20)
-    py_util.get_all_stock_total_volumn(begin_time, now)
+    py_util.get_all_stock_total_volumn(begin_time,  now)
 elif common == 8:
     py_util.check_stock_in_months_for_least_price()
 elif common == 10: #更新特定的stock，并检查是否满足特定的条件
@@ -88,6 +87,9 @@ elif common == 11: # 获取stock 的profit数据
     mgr_pe.get_all_stock_pe_data()
 elif common == 12: # 获取stock 的profit数据
     mgr_pe.check_all_stock_pe()
+elif common == 13: # 获取某个stock的数据
+    pe_info = mgr_pe.get_stock_now_pe("sz000877")
+    print(pe_info)
 else:
     print("error not find the common ", common)
 

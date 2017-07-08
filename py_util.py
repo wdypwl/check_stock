@@ -219,11 +219,19 @@ def get_stock_history_data(stock_number, option):
             if stock_number == "sh601688":
                 print("sh601688 year is", lastYear, "last season is ", lastSeason)
             for year in range(lastYear,int(nowYear)+1):
-                for season in range(lastSeason,5):
+                for season in range(lastSeason, 5):
                     get_history_data_by_html(stock_number, text[0], year, season)
         elif option == config.LAST_SEASON:
             season = math.ceil(int(month)/3)
             get_history_data_by_html(stock_number, text[0], int(nowYear), season)
+        elif option == config.LAST_YEAR:
+            date_format = datetime.datetime.now().strftime("%Y")
+            lastYear = int(date_format) - 1
+            lastSeason = 1
+            for year in range(lastYear,int(nowYear)+1):
+                for season in range(lastSeason, 5):
+                    get_history_data_by_html(stock_number, text[0], year, season)
+
 def get_all_stock_history_data(option):
     for i in range(1,1000):
         stock_number = "sz%06.0f" %(i)
@@ -430,7 +438,7 @@ def check_stock_in_months_for_least_price():
             now_price = result[4]
             save_data(stock_code, result)
             end = result[0]
-            if mgr_pe.check_condition_pe_pb(stock_code, now_price, 20, 10, 3):
+            if mgr_pe.check_condition_pe_pb(stock_code, now_price, 20, 10, 10, 3):
                 check_one_stock_least_price(stock_code, begin, end)
 
 def check_one_stock_least_price(stock_number, begin_date, end_date):
@@ -439,6 +447,7 @@ def check_one_stock_least_price(stock_number, begin_date, end_date):
     now_price = 0
     # date_format = datetime.datetime.now().strftime("%Y%m%d")
     now_date = end_date
+    # print(length)
     if length > 0:
         min = text[0][4]
         min_day = text[0][0]

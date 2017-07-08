@@ -1,6 +1,7 @@
 __author__ = 'Administrator'
 ALL_YEARS = 1
 LAST_SEASON = 2
+LAST_YEAR = 3
 
 TIME_MID_YEAR = 180
 TIME_ONE_YEAR = 360
